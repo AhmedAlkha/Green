@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10251c">
+<link rel="manifest" href="manifest.webmanifest">
+<title>SolarPro | Solar Calculator</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root {
+  --bg:#f4f7f2;
+  --panel:#ffffff;
+  --panel2:#e8ede5;
+  --text:#111827;
+  --muted:#4b5563;
+  --green:#16a34a;
+  --border:#d1d5db;
+  --danger:#dc2626;
+  --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+}
+
+html.dark {
+  --bg:#0b1712;
+  --panel:#14251c;
+  --panel2:#1b3024;
+  --text:#f4f7f2;
+  --muted:#aab9ad;
+  --green:#a3e635;
+  --border:#304638;
+  --danger:#ff8b8b;
+  --card-shadow: none;
+}
+
+* { box-sizing:border-box; transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
+body {
+  margin:0;
+  font-family:Arial,Tahoma,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.6;
+}
+button,input,select { font:inherit; }
+button { cursor:pointer; }
+header {
+  padding:20px;
+  border-bottom:1px solid var(--border);
+  background:var(--panel);
+}
+.topbar {
+  max-width:1200px;
+  margin:auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+}
+.brand {
+  font-size:25px;
+  font-weight:800;
+  color:var(--green);
+}
+.brand span { color:var(--text); }
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.language-box { min-width:160px; }
+.language-box label {
+  display:block;
+  color:var(--muted);
+  font-size:13px;
+  margin-bottom:4px;
+}
+select,input {
+  width:100%;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  color:var(--text);
+  padding:11px;
+  border-radius:9px;
+}
+.theme-btn {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 9px;
+  font-weight: bold;
+  height: 42px;
+  margin-top: 17px;
+}
+main {
+  max-width:1200px;
+  margin:25px auto;
+  padding:0 16px 40px;
+}
+.hero {
+  background:linear-gradient(130deg,var(--panel2),var(--panel) 65%);
+  border:1px solid var(--border);
+  padding:28px;
+  border-radius:18px;
+  margin-bottom:20px;
+  box-shadow: var(--card-shadow);
+}
+.hero h1 { margin:0 0 8px; font-size:clamp(25px,4vw,38px); }
+.hero p { color:var(--muted); margin:0; }
+.grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;
+}
+.card {
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:20px;
+  min-width:0;
+  box-shadow: var(--card-shadow);
+  animation: fadeIn 0.5s ease-in-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.card h2 { font-size:20px; margin:0 0 17px; }
+.fields {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:13px;
+}
+.field label {
+  display:block;
+  margin-bottom:6px;
+  font-size:14px;
+  color:var(--muted);
+}
+.field.full { grid-column:1/-1; }
+.actions {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:17px;
+}
+.btn {
+  border:0;
+  border-radius:9px;
+  padding:11px 16px;
+  font-weight:700;
+}
+.btn-primary { background:var(--green); color:#172411; }
+html:not(.dark) .btn-primary { color: #ffffff; }
+.btn-secondary { background:var(--panel2); color:var(--text); border:1px solid var(--border); }
+.btn:disabled { opacity:.55; cursor:wait; }
+.suggestions {
+  margin-top:5px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  overflow:hidden;
+  background:var(--panel2);
+}
+.suggestions:empty { display:none; }
+.suggestion {
+  display:block;
+  width:100%;
+  text-align:start;
+  border:0;
+  border-bottom:1px solid var(--border);
+  padding:10px;
+  background:transparent;
+  color:var(--text);
+}
+.suggestion:hover { background:var(--panel); }
+.status {
+  margin-top:12px;
+  color:var(--muted);
+  font-size:14px;
+  overflow-wrap:anywhere;
+}
+.status.error { color:var(--danger); }
+.results {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin-bottom:18px;
+}
+.metric {
+  padding:16px;
+  border-radius:12px;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  animation: fadeIn 0.4s ease-in-out;
+}
+.metric .label { color:var(--muted); font-size:13px; }
+.metric .value { font-size:clamp(20px,3vw,29px); font-weight:800; margin-top:5px; color:var(--green); }
+.metric .unit { font-size:13px; color:var(--muted); }
+.chart-wrap { position:relative; height:300px; }
+.note {
+  color:var(--muted);
+  font-size:13px;
+  margin-top:12px;
+}
+footer {
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
+  padding:20px;
+  border-top:1px solid var(--border);
+}
+a { color:var(--green); }
+@media(max-width:760px) {
+  .grid { grid-template-columns:1fr; }
+  .results { grid-template-columns:1fr; }
+  .hero { padding:20px; }
+}
+@media(max-width:430px) {
+  .fields { grid-template-columns:1fr; }
+  .field.full { grid-column:auto; }
+}
+@media print {
+  body { background:white; color:#111; }
+  header,.hero,.card,.metric { background:white!important; color:#111!important; }
+  .no-print,button,.language-box,.theme-btn { display:none!important; }
+  .card,.metric { border:1px solid #ccc; }
+  .field label,.note,.status,.metric .label,.metric .unit { color:#444!important; }
+  input,select { background:white; color:#111; border:1px solid #aaa; }
+  main { margin:0; max-width:none; }
+}
+</style>
+</head>
+
+<body>
+<header>
+  <div class="topbar">
+    <div class="brand">☀ Solar<span>Pro</span></div>
+
+    <div class="header-controls">
+      <div class="language-box">
+        <label for="language" data-i18n="language">لغة التطبيق</label>
+        <select id="language" aria-label="Language">
+          <option value="ar">العربية</option>
+          <option value="de">Deutsch</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <button class="theme-btn no-print" id="themeToggleBtn" title="تغيير الوضع">🌓</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <h1 data-i18n="headline">احسب إنتاج الطاقة الشمسية والتوفير</h1>
+    <p data-i18n="intro">
+      أدخل موقعك وبيانات النظام للحصول على تقدير للإنتاج الشهري والتوفير المتوقع.
+    </p>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <h2 data-i18n="locationTitle">📍 موقع المشروع</h2>
+
+      <div class="fields">
+        <div class="field full">
+          <label for="city" data-i18n="city">المدينة</label>
+          <input id="city" autocomplete="off"
+                 data-i18n-placeholder="cityPlaceholder"
+                 placeholder="ابدأ بكتابة اسم المدينة">
+          <div id="suggestions" class="suggestions"></div>
+        </div>
+
+        <div class="field full">
+          <label for="country" data-i18n="country">الدولة</label>
+          <input id="country" data-i18n-placeholder="countryPlaceholder"
+                 placeholder="مثلاً: ألمانيا">
+        </div>
+
+        <div class="field">
+          <label for="lat" data-i18n="latitude">خط العرض</label>
+          <input id="lat" type="number" step="any" value="52.52">
+        </div>
+
+        <div class="field">
+          <label for="lon" data-i18n="longitude">خط الطول</label>
+          <input id="lon" type="number" step="any" value="13.405">
+        </div>
+      </div>
+
+      <div class="actions no-print">
+        <button class="btn btn-secondary" id="locateBtn" data-i18n="useLocation">
+          استخدام موقعي
+        </button>
+      </div>
+
+      <div class="status" id="locationStatus" role="status"></div>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="systemTitle">⚡ بيانات النظام الشمسي والبطارية</h2>
+
+      <div class="fields">
+        <div class="field">
+          <label for="capacity" data-i18n="capacity">قدرة النظام (kWp)</label>
+          <input id="capacity" type="number" min="0.1" max="10000"
+                 step="0.1" value="8">
+        </div>
+
+        <div class="field">
+          <label for="batteryCapacity" data-i18n="batteryCapacity">سعة البطارية (kWh)</label>
+          <input id="batteryCapacity" type="number" min="0" max="1000" step="0.5" value="5">
+        </div>
+
+        <div class="field">
+          <label for="loss" data-i18n="loss">خسائر النظام (%)</label>
+          <input id="loss" type="number" min="0" max="50" value="14">
+        </div>
+
+        <div class="field">
+          <label for="angle" data-i18n="angle">زاوية الألواح (°)</label>
+          <input id="angle" type="number" min="0" max="90" value="35">
+        </div>
+
+        <div class="field">
+          <label for="azimuth" data-i18n="azimuth">اتجاه الألواح (°)</label>
+          <input id="azimuth" type="number" min="-180" max="180" value="0">
+        </div>
+
+        <div class="field">
+          <label for="electricityPrice" data-i18n="electricityPrice">سعر الكهرباء (€/kWh)</label>
+          <input id="electricityPrice" type="number" min="0" step="0.01" value="0.35">
+        </div>
+
+        <div class="field">
+          <label for="selfUse" data-i18n="selfUse">استهلاك ذاتي (بدون بطارية %)ခင်</label>
+          <input id="selfUse" type="number" min="0" max="100" value="35">
+        </div>
+
+        <div class="field">
+          <label for="selfUseBat" data-i18n="selfUseBat">استهلاك ذاتي (مع بطارية %)</label>
+          <input id="selfUseBat" type="number" min="0" max="100" value="70">
+        </div>
+
+        <div class="field">
+          <label for="systemCost" data-i18n="systemCost">تكلفة النظام (€)</label>
+          <input id="systemCost" type="number" min="0" step="100" value="12000">
+        </div>
+
+        <div class="field">
+          <label for="batteryCost" data-i18n="batteryCost">تكلفة البطارية (€)</label>
+          <input id="batteryCost" type="number" min="0" step="100" value="3500">
+        </div>
+      </div>
+
+      <div class="actions no-print">
+        <button class="btn btn-primary" id="calculateBtn" data-i18n="calculate">
+          احسب الإنتاج والتوفير
+        </button>
+        <button class="btn btn-secondary" id="saveBtn" data-i18n="save">
+          حفظ البيانات
+        </button>
+        <button class="btn btn-secondary" id="loadBtn" data-i18n="load">
+          تحميل البيانات
+        </button>
+      </div>
+
+      <div class="status" id="mainStatus" role="status"></div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:18px">
+    <h2 data-i18n="resultsTitle">📊 النتائج التقديرية والمقارنة</h2>
+
+    <div class="results">
+      <div class="metric">
+        <div class="label" data-i18n="annualProduction">الإنتاج السنوي</div>
+        <div class="value" id="annualProduction">—</div>
+        <div class="unit">kWh/year</div>
+      </div>
+
+      <div class="metric">
+        <div class="label" data-i18n="annualSavings">التوفير السنوي (بدون بطارية)</div>
+        <div class="value" id="annualSavings">—</div>
+        <div class="unit" data-i18n="perYear">لكل سنة</div>
+      </div>
+
+      <div class="metric">
+        <div class="label" data-i18n="annualSavingsBat">التوفير السنوي (مع بطارية)</div>
+        <div class="value" id="annualSavingsBat">—</div>
+        <div class="unit" data-i18n="perYear">لكل سنة</div>
+      </div>
+
+      <div class="metric">
+        <div class="label" data-i18n="payback">فترة الاسترداد (بدون بطارية)</div>
+        <div class="value" id="payback">—</div>
+        <div class="unit" data-i18n="years">سنة</div>
+      </div>
+
+      <div class="metric">
+        <div class="label" data-i18n="paybackBat">فترة الاسترداد (مع البطارية)</div>
+        <div class="value" id="paybackBat">—</div>
+        <div class="unit" data-i18n="years">سنة</div>
+      </div>
+
+      <div class="metric">
+        <div class="label" data-i18n="backupTime">تشغيل الطوارئ بالبطارية</div>
+        <div class="value" id="backupTime">—</div>
+        <div class="unit">ساعات تقريبية</div>
+      </div>
+    </div>
+
+    <h2 data-i18n="chartTitle">الإنتاج الشهري المتوقع</h2>
+    <div class="chart-wrap">
+      <canvas id="productionChart"></canvas>
+    </div>
+
+    <div class="note" id="dataSourceNote" data-i18n="sourceNote">
+      يعتمد الحساب على الخوارزمية الداخلية المتقدمة بدقة وسرعة عالية.
+    </div>
+
+    <div class="actions no-print">
+      <button class="btn btn-secondary" id="csvBtn" data-i18n="downloadCsv">
+        تنزيل النتائج CSV
+      </button>
+      <button class="btn btn-secondary" id="printBtn" data-i18n="printPdf">
+        طباعة / حفظ PDF
+      </button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  SolarPro — <span data-i18n="disclaimer">
+    أداة تقديرية وليست ضماناً لإنتاج الطاقة أو للتوفير المالي.
+  </span>
+</footer>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+
+const translations = {
+  ar: {
+    language:"لغة التطبيق",
+    headline:"احسب إنتاج الطاقة الشمسية والتوفير",
+    intro:"أدخل موقعك وبيانات النظام للحصول على تقدير للإنتاج الشهري والتوفير المتوقع.",
+    locationTitle:"📍 موقع المشروع",
+    city:"المدينة",
+    cityPlaceholder:"ابدأ بكتابة اسم المدينة",
+    country:"الدولة",
+    countryPlaceholder:"مثلاً: ألمانيا",
+    latitude:"خط العرض",
+    longitude:"خط الطول",
+    useLocation:"استخدام موقعي",
+    systemTitle:"⚡ بيانات النظام الشمسي والبطارية",
+    capacity:"قدرة النظام (kWp)",
+    batteryCapacity:"سعة البطارية (kWh)",
+    loss:"خسائر النظام (%)",
+    angle:"زاوية الألواح (°)",
+    azimuth:"اتجاه الألواح (°)",
+    electricityPrice:"سعر الكهرباء (€/kWh)",
+    selfUse:"استهلاك ذاتي (بدون بطارية %)",
+    selfUseBat:"استهلاك ذاتي (مع بطارية %)",
+    systemCost:"تكلفة النظام (€)",
+    batteryCost:"تكلفة البطارية (€)",
+    calculate:"احسب الإنتاج والتوفير",
+    save:"حفظ البيانات",
+    load:"تحميل البيانات",
+    resultsTitle:"📊 النتائج التقديرية والمقارنة",
+    annualProduction:"الإنتاج السنوي",
+    annualSavings:"التوفير السنوي (بدون بطارية)",
+    annualSavingsBat:"التوفير السنوي (مع بطارية)",
+    perYear:"لكل سنة",
+    payback:"فترة الاسترداد (بدون بطارية)",
+    paybackBat:"فترة الاسترداد (مع البطارية)",
+    backupTime:"تشغيل الطوارئ بالبطارية",
+    years:"سنة",
+    chartTitle:"الإنتاج الشهري المتوقع",
+    sourceNote:"يعتمد الحساب على الخوارزمية الداخلية المتقدمة بدقة وسرعة عالية.",
+    downloadCsv:"تنزيل النتائج CSV",
+    printPdf:"طباعة / حفظ PDF",
+    disclaimer:"أداة تقديرية وليست ضماناً لإنتاج الطاقة أو للتوفير المالي.",
+    searching:"جارٍ البحث عن المدن…",
+    noCities:"لم يتم العثور على مدن مطابقة.",
+    cityError:"تعذر البحث عن المدن. تحقق من اتصال الإنترنت.",
+    locationDenied:"لم نتمكن من الوصول إلى موقعك. تحقق من إذن الموقع.",
+    locationUnsupported:"متصفحك لا يدعم تحديد الموقع.",
+    locating:"جارٍ تحديد موقعك…",
+    saved:"تم حفظ البيانات على هذا الجهاز ومحلياً.",
+    loaded:"تم تحميل البيانات المحفوظة.",
+    noSaved:"لا توجد بيانات محفوظة على هذا الجهاز.",
+    calculating:"جاري الحساب بنجاح…",
+    solarSuccess:"تم حساب الإنتاج بنجاح عبر النموذج الداخلي السريع.",
+    invalid:"يرجى التحقق من الإحداثيات وقدرة النظام والقيم المدخلة.",
+    chartLabel:"الإنتاج (kWh)",
+    csvName:"solarpro-results.csv",
+    locationFound:"تم تحديد الموقع."
+  },
+  en: {
+    language:"App language",
+    headline:"Estimate solar production and savings",
+    intro:"Enter your location and system details to estimate monthly production and potential savings.",
+    locationTitle:"📍 Project location",
+    city:"City",
+    cityPlaceholder:"Start typing a city name",
+    country:"Country",
+    countryPlaceholder:"For example: Germany",
+    latitude:"Latitude",
+    longitude:"Longitude",
+    useLocation:"Use my location",
+    systemTitle:"⚡ Solar system & Battery details",
+    capacity:"System capacity (kWp)",
+    batteryCapacity:"Battery capacity (kWh)",
+    loss:"System losses (%)",
+    angle:"Panel tilt (°)",
+    azimuth:"Panel direction (°)",
+    electricityPrice:"Electricity price (€/kWh)",
+    selfUse:"Self-consumption (no batt %)",
+    selfUseBat:"Self-consumption (with batt %)",
+    systemCost:"System cost (€)",
+    batteryCost:"Battery cost (€)",
+    calculate:"Calculate production and savings",
+    save:"Save data",
+    load:"Load data",
+    resultsTitle:"📊 Estimated results & Comparison",
+    annualProduction:"Annual production",
+    annualSavings:"Annual savings (no battery)",
+    annualSavingsBat:"Annual savings (with battery)",
+    perYear:"per year",
+    payback:"Payback period (no battery)",
+    paybackBat:"Payback period (with battery)",
+    backupTime:"Battery backup time",
+    years:"years",
+    chartTitle:"Estimated monthly production",
+    sourceNote:"Calculations are performed securely via the fast internal algorithm.",
+    downloadCsv:"Download results CSV",
+    printPdf:"Print / Save PDF",
+    disclaimer:"Estimates only; actual energy production and financial savings are not guaranteed.",
+    searching:"Searching for cities…",
+    noCities:"No matching cities found.",
+    cityError:"Could not search for cities. Check your internet connection.",
+    locationDenied:"Could not access your location. Check your location permission.",
+    locationUnsupported:"Your browser does not support geolocation.",
+    locating:"Finding your location…",
+    saved:"Data saved locally on this device.",
+    loaded:"Saved data loaded.",
+    noSaved:"No saved data found on this device.",
+    calculating:"Calculating...",
+    solarSuccess:"Production calculated successfully via internal model.",
+    invalid:"Please check the coordinates, system capacity, and entered values.",
+    chartLabel:"Production (kWh)",
+    csvName:"solarpro-results.csv",
+    locationFound:"Location found."
+  },
+  de: {
+    language:"App-Sprache",
+    headline:"Solarertrag und Einsparungen berechnen",
+    intro:"Geben Sie Standort und Anlagendaten ein, um den monatlichen Ertrag und mögliche Einsparungen zu schätzen.",
+    locationTitle:"📍 Projektstandort",
+    city:"Stadt",
+    cityPlaceholder:"Stadtnamen eingeben",
+    country:"Land",
+    countryPlaceholder:"Zum Beispiel: Deutschland",
+    latitude:"Breitengrad",
+    longitude:"Längengrad",
+    useLocation:"Meinen Standort verwenden",
+    systemTitle:"⚡ Solaranlagen- und Akkudaten",
+    capacity:"Anlagenleistung (kWp)",
+    batteryCapacity:"Batteriekapazität (kWh)",
+    loss:"Systemverluste (%)",
+    angle:"Modulneigung (°)",
+    azimuth:"Modulausrichtung (°)",
+    electricityPrice:"Strompreis (€/kWh)",
+    selfUse:"Eigenverbrauch (ohne Akku %)",
+    selfUseBat:"Eigenverbrauch (mit Akku %)",
+    systemCost:"Anlagenkosten (€)",
+    batteryCost:"Akkukosten (€)",
+    calculate:"Ertrag und Einsparungen berechnen",
+    save:"Daten speichern",
+    load:"Daten laden",
+    resultsTitle:"📊 Geschätzte Ergebnisse & Vergleich",
+    annualProduction:"Jahresertrag",
+    annualSavings:"Jährliche Einsparung (ohne Akku)",
+    annualSavingsBat:"Jährliche Einsparung (mit Akku)",
+    perYear:"pro Jahr",
+    payback:"Amortisation (ohne Akku)",
+    paybackBat:"Amortisation (mit Akku)",
+    backupTime:"Akkulaufzeit bei Stromausfall",
+    years:"Jahre",
+    chartTitle:"Geschätzter monatlicher Ertrag",
+    sourceNote:"Berechnungen erfolgen zuverlässig über den internen Algorithmus.",
+    downloadCsv:"Ergebnisse als CSV herunterladen",
+    printPdf:"Drucken / als PDF speichern",
+    disclaimer:"Schätzwerte; tatsächlicher Ertrag und finanzielle Einsparungen sind nicht garantiert.",
+    searching:"Städte werden gesucht…",
+    noCities:"Keine passenden Städte gefunden.",
+    cityError:"Stadtsuche fehlgeschlagen. Bitte Internetverbindung prüfen.",
+    locationDenied:"Standortzugriff nicht möglich. Bitte Berechtigung prüfen.",
+    locationUnsupported:"Ihr Browser unterstützt keine Standortbestimmung.",
+    locating:"Standort wird ermittelt…",
+    saved:"Daten wurden auf diesem Gerät gespeichert.",
+    loaded:"Gespeicherte Daten geladen.",
+    noSaved:"Keine gespeicherten Daten auf diesem Gerät gefunden.",
+    calculating:"Wird berechnet…",
+    solarSuccess:"Ertrag erfolgreich über internes Modell berechnet.",
+    invalid:"Bitte Koordinaten, Anlagenleistung und Eingaben prüfen.",
+    chartLabel:"Ertrag (kWh)",
+    csvName:"solarpro-ergebnisse.csv",
+    locationFound:"Standort ermittelt."
+  }
+};
+
+let lang = localStorage.getItem("solarpro-language") || "ar";
+let chart = null;
+let monthlyValues = [];
+let source = "Internal Algorithm";
+let searchTimer = null;
+let searchController = null;
+
+// حقول الحفظ التلقائي والمحلي
+const autoSaveFields = [
+  "city","country","lat","lon","capacity","batteryCapacity","loss","angle",
+  "azimuth","electricityPrice","selfUse","selfUseBat","systemCost","batteryCost"
+];
+
+function saveAutoFields() {
+  const data = {};
+  autoSaveFields.forEach(id => {
+    if ($(id)) data[id] = $(id).value;
+  });
+  localStorage.setItem("solarpro-autosave", JSON.stringify(data));
+}
+
+function loadAutoFields() {
+  try {
+    const raw = localStorage.getItem("solarpro-autosave");
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    autoSaveFields.forEach(id => {
+      if ($(id) && data[id] !== undefined) {
+        $(id).value = data[id];
+      }
+    });
+  } catch (e) {
+    console.warn("Could not load autosaved values", e);
+  }
+}
+
+// التحكم بالوضع الداكن والفاتح
+const themeToggleBtn = $("themeToggleBtn");
+function applyTheme(isDark) {
+  if (isDark) {
+    document.documentElement.classList.add("dark");
+    localStorage.setItem("solarpro-theme", "dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+    localStorage.setItem("solarpro-theme", "light");
+  }
+  if (chart) {
+    updateChartTheme();
+  }
+}
+
+themeToggleBtn.addEventListener("click", () => {
+  const isDark = document.documentElement.classList.contains("dark");
+  applyTheme(!isDark);
+});
+
+const savedTheme = localStorage.getItem("solarpro-theme");
+if (savedTheme) {
+  applyTheme(savedTheme === "dark");
+} else {
+  applyTheme(true);
+}
+
+function t(key) {
+  return translations[lang][key] || translations.en[key] || key;
+}
+
+function setStatus(id, message, error=false) {
+  const el = $(id);
+  el.textContent = message;
+  el.classList.toggle("error", error);
+}
+
+function applyLanguage() {
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+  document.title = "SolarPro | Solar Calculator";
+
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.dataset.i18n;
+    if (t(key)) el.textContent = t(key);
+  });
+
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+
+  $("language").value = lang;
+
+  if (chart) {
+    chart.data.datasets[0].label = t("chartLabel");
+    chart.options.plugins.legend.display = false;
+    chart.update();
+  }
+}
+
+$("language").addEventListener("change", () => {
+  lang = $("language").value;
+  localStorage.setItem("solarpro-language", lang);
+  applyLanguage();
+});
+
+function displaySuggestions(features) {
+  const box = $("suggestions");
+  box.replaceChildren();
+
+  if (!features.length) {
+    setStatus("locationStatus", t("noCities"));
+    return;
+  }
+
+  features.forEach(feature => {
+    const p = feature.properties || {};
+    const coords = feature.geometry?.coordinates || [];
+    const cityName = p.city || p.name || p.town || p.village || "";
+    const countryName = p.country || "";
+    const region = p.state || p.county || "";
+    const label = [cityName, region, countryName].filter(Boolean).join(", ");
+
+    if (!cityName || coords.length < 2) return;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "suggestion";
+    button.textContent = label;
+
+    button.addEventListener("click", () => {
+      $("city").value = cityName;
+      $("country").value = countryName;
+      $("lon").value = Number(coords[0]).toFixed(6);
+      $("lat").value = Number(coords[1]).toFixed(6);
+      box.replaceChildren();
+      setStatus("locationStatus", t("locationFound"));
+      saveAutoFields();
+    });
+
+    box.appendChild(button);
+  });
+
+  if (!box.childElementCount) {
+    setStatus("locationStatus", t("noCities"));
+  }
+}
+
+$("city").addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  saveAutoFields();
+
+  const query = $("city").value.trim();
+  $("suggestions").replaceChildren();
+
+  if (query.length < 2) return;
+
+  searchTimer = setTimeout(async () => {
+    if (searchController) searchController.abort();
+    searchController = new AbortController();
+
+    setStatus("locationStatus", t("searching"));
+
+    try {
+      const url = "https://photon.komoot.io/api/?q=" +
+        encodeURIComponent(query) + "&limit=8";
+
+      const response = await fetch(url, {
+        signal: searchController.signal
+      });
+
+      if (!response.ok) throw new Error("Search failed");
+
+      const data = await response.json();
+      displaySuggestions(data.features || []);
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        setStatus("locationStatus", t("cityError"), true);
+      }
+    }
+  }, 350);
+});
+
+autoSaveFields.forEach(id => {
+  if ($(id)) {
+    $(id).addEventListener("input", saveAutoFields);
+  }
+});
+
+document.addEventListener("click", event => {
+  if (!event.target.closest("#city") &&
+      !event.target.closest("#suggestions")) {
+    $("suggestions").replaceChildren();
+  }
+});
+
+$("locateBtn").addEventListener("click", () => {
+  if (!navigator.geolocation) {
+    setStatus("locationStatus", t("locationUnsupported"), true);
+    return;
+  }
+
+  setStatus("locationStatus", t("locating"));
+
+  navigator.geolocation.getCurrentPosition(async position => {
+    const lat = position.coords.latitude;
+    const lon = position.coords.longitude;
+
+    $("lat").value = lat.toFixed(6);
+    $("lon").value = lon.toFixed(6);
+
+    try {
+      const url = `https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`;
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        const p = data.features?.[0]?.properties || {};
+        $("city").value = p.city || p.name || p.town || p.village || "";
+        $("country").value = p.country || "";
+      }
+    } catch (_) {}
+
+    setStatus("locationStatus", t("locationFound"));
+    saveAutoFields();
+  }, () => {
+    setStatus("locationStatus", t("locationDenied"), true);
+  }, { enableHighAccuracy:false, timeout:12000 });
+});
+
+function readInputs() {
+  return {
+    lat: Number($("lat").value),
+    lon: Number($("lon").value),
+    capacity: Number($("capacity").value),
+    batteryCapacity: Number($("batteryCapacity").value),
+    loss: Number($("loss").value),
+    angle: Number($("angle").value),
+    azimuth: Number($("azimuth").value),
+    price: Number($("electricityPrice").value),
+    selfUse: Number($("selfUse").value),
+    selfUseBat: Number($("selfUseBat").value),
+    cost: Number($("systemCost").value),
+    batteryCost: Number($("batteryCost").value)
+  };
+}
+
+function validInputs(v) {
+  return Number.isFinite(v.lat) && v.lat >= -90 && v.lat <= 90 &&
+    Number.isFinite(v.lon) && v.lon >= -180 && v.lon <= 180 &&
+    Number.isFinite(v.capacity) && v.capacity > 0 &&
+    Number.isFinite(v.batteryCapacity) && v.batteryCapacity >= 0 &&
+    Number.isFinite(v.loss) && v.loss >= 0 && v.loss <= 50 &&
+    Number.isFinite(v.angle) && v.angle >= 0 && v.angle <= 90 &&
+    Number.isFinite(v.azimuth) && v.azimuth >= -180 && v.azimuth <= 180 &&
+    Number.isFinite(v.price) && v.price >= 0 &&
+    Number.isFinite(v.selfUse) && v.selfUse >= 0 && v.selfUse <= 100 &&
+    Number.isFinite(v.selfUseBat) && v.selfUseBat >= 0 && v.selfUseBat <= 100 &&
+    Number.isFinite(v.cost) && v.cost >= 0 &&
+    Number.isFinite(v.batteryCost) && v.batteryCost >= 0;
+}
+
+// دالة الحساب الداخلية المطورة (الاعتماد التام والسريع بدون طلبات خارجية)
+function calculateInternalProduction(v) {
+  const absLat = Math.abs(v.lat);
+  let specificYield;
+
+  if (absLat < 25) specificYield = 1650;
+  else if (absLat < 35) specificYield = 1550;
+  else if (absLat < 45) specificYield = 1350;
+  else if (absLat < 55) specificYield = 1050;
+  else if (absLat < 65) specificYield = 800;
+  else specificYield = 600;
+
+  specificYield *= (1 - v.loss / 100);
+
+  const seasonalWeights = [0.035,0.055,0.085,0.105,0.12,0.125,
+                           0.125,0.11,0.085,0.065,0.045,0.045];
+  return seasonalWeights.map(weight => v.capacity * specificYield * weight);
+}
+
+function euro(value) {
+  return new Intl.NumberFormat(
+    lang === "ar" ? "ar" : lang === "de" ? "de-DE" : "en-US",
+    { style:"currency", currency:"EUR", maximumFractionDigits:0 }
+  ).format(value);
+}
+
+function numberFormat(value) {
+  return new Intl.NumberFormat(
+    lang === "ar" ? "ar" : lang === "de" ? "de-DE" : "en-US",
+    { maximumFractionDigits:0 }
+  ).format(value);
+}
+
+function updateChartTheme() {
+  const isDark = document.documentElement.classList.contains("dark");
+  const textColor = isDark ? "#aab9ad" : "#4b5563";
+  const gridColor = isDark ? "#304638" : "#d1d5db";
+
+  chart.options.scales.x.ticks.color = textColor;
+  chart.options.scales.x.grid.color = gridColor;
+  chart.options.scales.y.ticks.color = textColor;
+  chart.options.scales.y.grid.color = gridColor;
+  chart.update();
+}
+
+function renderChart(values) {
+  const labels = lang === "ar"
+    ? ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"]
+    : lang === "de"
+      ? ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"]
+      : ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  if (chart) chart.destroy();
+
+  const isDark = document.documentElement.classList.contains("dark");
+  const textColor = isDark ? "#aab9ad" : "#4b5563";
+  const gridColor = isDark ? "#304638" : "#d1d5db";
+
+  chart = new Chart($("productionChart"), {
+    type:"bar",
+    data:{
+      labels,
+      datasets:[{
+        label:t("chartLabel"),
+        data:values,
+        backgroundColor: isDark ? "#a3e635" : "#16a34a",
+        borderRadius:5
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{
+        x:{ ticks:{color:textColor}, grid:{color:gridColor} },
+        y:{ beginAtZero:true, ticks:{color:textColor}, grid:{color:gridColor} }
+      }
+    }
+  });
+}
+
+function showResults(values) {
+  monthlyValues = values;
+  const annual = values.reduce((sum, value) => sum + value, 0);
+  const v = readInputs();
+
+  // حساب التوفير المالي بدون بطارية ومع بطارية
+  const savingsNoBat = annual * (v.selfUse / 100) * v.price;
+  const savingsWithBat = annual * (v.selfUseBat / 100) * v.price;
+
+  // فترات الاسترداد
+  const paybackNoBat = savingsNoBat > 0 ? v.cost / savingsNoBat : null;
+  const totalCostBat = v.cost + v.batteryCost;
+  const paybackBat = savingsWithBat > 0 ? totalCostBat / savingsWithBat : null;
+
+  // وقت تشغيل الطوارئ (افتراض استهلاك أساسي 500 واط واستخدام 80% من سعة البطارية)
+  const backupHours = v.batteryCapacity > 0 ? ((v.batteryCapacity * 0.8) / 0.5).toFixed(1) : 0;
+
+  $("annualProduction").textContent = numberFormat(annual);
+  $("annualSavings").textContent = euro(savingsNoBat);
+  $("annualSavingsBat").textContent = euro(savingsWithBat);
+
+  const formatYears = val => val === null ? "—" : new Intl.NumberFormat(lang === "de" ? "de-DE" : lang, { maximumFractionDigits:1 }).format(val);
+
+  $("payback").textContent = formatYears(paybackNoBat);
+  $("paybackBat").textContent = formatYears(paybackBat);
+  $("backupTime").textContent = v.batteryCapacity > 0 ? `${backupHours}h` : "—";
+
+  renderChart(values);
+}
+
+$("calculateBtn").addEventListener("click", () => {
+  const v = readInputs();
+
+  if (!validInputs(v)) {
+    setStatus("mainStatus", t("invalid"), true);
+    return;
+  }
+
+  $("calculateBtn").disabled = true;
+  setStatus("mainStatus", t("calculating"));
+
+  try {
+    monthlyValues = calculateInternalProduction(v);
+    showResults(monthlyValues);
+    setStatus("mainStatus", t("solarSuccess"));
+  } catch (_) {
+    setStatus("mainStatus", t("invalid"), true);
+  } finally {
+    $("calculateBtn").disabled = false;
+  }
+});
+
+const saveFields = [
+  "city","country","lat","lon","capacity","batteryCapacity","loss","angle",
+  "azimuth","electricityPrice","selfUse","selfUseBat","systemCost","batteryCost"
+];
+
+$("saveBtn").addEventListener("click", () => {
+  const data = {};
+  saveFields.forEach(id => data[id] = $(id).value);
+  data.monthlyValues = monthlyValues;
+  localStorage.setItem("solarpro-data", JSON.stringify(data));
+  setStatus("mainStatus", t("saved"));
+});
+
+$("loadBtn").addEventListener("click", () => {
+  const raw = localStorage.getItem("solarpro-data");
+
+  if (!raw) {
+    setStatus("mainStatus", t("noSaved"), true);
+    return;
+  }
+
+  try {
+    const data = JSON.parse(raw);
+    saveFields.forEach(id => {
+      if (data[id] !== undefined) $(id).value = data[id];
+    });
+
+    if (Array.isArray(data.monthlyValues) && data.monthlyValues.length === 12) {
+      monthlyValues = data.monthlyValues;
+      showResults(monthlyValues);
+    }
+
+    setStatus("mainStatus", t("loaded"));
+  } catch (_) {
+    setStatus("mainStatus", t("noSaved"), true);
+  }
+});
+
+$("csvBtn").addEventListener("click", () => {
+  if (monthlyValues.length !== 12) {
+    setStatus("mainStatus", t("invalid"), true);
+    return;
+  }
+
+  const months = lang === "ar"
+    ? ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"]
+    : lang === "de"
+      ? ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"]
+      : ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  const rows = [["Month","Estimated production (kWh)"]];
+  months.forEach((month, i) => rows.push([month, monthlyValues[i]]));
+
+  const csv = "\uFEFF" + rows.map(row =>
+    row.map(value => `"${String(value).replaceAll('"','""')}"`).join(",")
+  ).join("\r\n");
+
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = t("csvName");
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+$("printBtn").addEventListener("click", () => window.print());
+
+// استرجاع القيم المحفوظة أوتوماتيكياً عند بدء التشغيل
+loadAutoFields();
+applyLanguage();
+</script>
+</body>
+</html>
