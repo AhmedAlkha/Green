@@ -1,7 +1,7 @@
 {
   "name": "SolarPro Solar Calculator",
   "short_name": "SolarPro",
-  "start_url": "./solar4.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0b1712",
